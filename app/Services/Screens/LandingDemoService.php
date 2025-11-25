@@ -2,17 +2,16 @@
 
 namespace App\Services\Screens;
 
+use App\Services\UI\UIBuilder;
+use App\Services\UI\Enums\LayoutType;
 use App\Services\UI\AbstractUIService;
 use App\Services\UI\Components\UIContainer;
-use App\Services\UI\Enums\LayoutType;
-use App\Services\UI\UIBuilder;
 
 class LandingDemoService extends AbstractUIService
 {
-    protected function buildBaseUI(...$params): UIContainer
+    protected function buildBaseUI(UIContainer $container, ...$params): void
     {
-        $container = UIBuilder::container('main')
-            ->parent('main')
+        $container
             ->layout(LayoutType::VERTICAL)
             ->shadow(false)
             ->justifyContent('center')
@@ -22,23 +21,23 @@ class LandingDemoService extends AbstractUIService
         // Hero Section
         $container->add(
             UIBuilder::label('welcome')
-                ->text('🚀 Bienvenido a USIM UI Framework')
-                ->style('h2')
+                ->text('🚀 Welcome to USIM UI Framework')
+                ->style('h1')
                 ->center()
         );
 
         $container->add(
             UIBuilder::label('subtitle')
-                ->text('Sistema moderno de componentes UI para aplicaciones web')
-                ->style('h4')
+                ->text('A modern UI component system for web applications')
+                ->style('h2')
                 ->center()
         );
 
         // Features Section
         $container->add(
             UIBuilder::label('features_title')
-                ->text('✨ Características Principales')
-                ->style('h2')
+                ->text('✨ Key Features')
+                ->style('h3')
                 ->center()
         );
 
@@ -104,7 +103,7 @@ class LandingDemoService extends AbstractUIService
                 ->addAction('Documentación', 'view_docs', [], 'info')
         );
 
-        return $container;
+        // return $container;
     }
 
     /**

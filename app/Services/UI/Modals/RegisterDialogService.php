@@ -5,6 +5,8 @@ namespace App\Services\UI\Modals;
 use App\Services\UI\UIBuilder;
 use App\Services\UI\Enums\LayoutType;
 use App\Services\UI\Enums\JustifyContent;
+use App\Services\UI\UIChangesCollector;
+use App\Services\UI\Support\FakeDataHelper;
 
 /**
  * Register Dialog Service
@@ -13,6 +15,15 @@ use App\Services\UI\Enums\JustifyContent;
  */
 class RegisterDialogService
 {
+
+    public static function open(...$params): void
+    {
+        $dialog = new self();
+        $format = $dialog->getUI(...$params);
+        $uiChanges = app(UIChangesCollector::class);
+        $uiChanges->add($format);
+    }
+
     /**
      * Build register dialog UI
      *
@@ -23,48 +34,93 @@ class RegisterDialogService
      */
     public function getUI(
         string $submitAction = 'submit_register',
-        ?string $cancelAction = 'close_register_dialog',
+        ?string $cancelAction = 'close_modal',
+        bool $fakeData = false,
+        bool $askForRole = false,
         ?int $callerServiceId = null
     ): array {
+        $name = '';
+        $email = '';
+        $password = '';
+        $password_confirmation = '';
+        $role = 'user';
+        if ($fakeData) {
+            $userData = FakeDataHelper::userData(['user', 'admin']);
+            $name = $userData['name'];
+            $email = $userData['email'];
+            $password = $userData['password'];
+            $password_confirmation = $userData['password_confirmation'];
+            $role = $userData['role'];
+        }
         // Main container for the modal
         $registerContainer = UIBuilder::container('register_dialog')
             ->parent('modal')
             ->shadow(false)
-            ->padding('30px');
+            ->padding('20px');
 
         // Name input
         $registerContainer->add(
-            UIBuilder::input('register_name')
+            UIBuilder::input('name')
                 ->label('Full Name')
                 ->placeholder('Enter your full name')
                 ->required(true)
+                ->value($name)
+                ->autocomplete('off')
         );
 
         // Email input
         $registerContainer->add(
-            UIBuilder::input('register_email')
+            UIBuilder::input('email')
                 ->label('Email')
                 ->placeholder('Enter your email')
                 ->required(true)
+                ->value($email)
+                ->autocomplete('off')
         );
 
         // Password input
         $registerContainer->add(
-            UIBuilder::input('register_password')
+            UIBuilder::input('password')
                 ->label('Password')
                 ->type('password')
                 ->placeholder('Enter your password (min 8 characters)')
                 ->required(true)
+                ->value($password)
+                ->autocomplete('new-password')
         );
 
         // Password confirmation
         $registerContainer->add(
-            UIBuilder::input('register_password_confirmation')
+            UIBuilder::input('password_confirmation')
                 ->label('Confirm Password')
                 ->type('password')
                 ->placeholder('Confirm your password')
                 ->required(true)
+                ->value($password_confirmation)
+                ->autocomplete('new-password')
         );
+
+        if ($askForRole) {
+
+            // Role select
+            $registerContainer->add(
+                UIBuilder::select('roles')
+                    ->label('Role')
+                    ->options([
+                        ['value' => 'user', 'label' => 'User'],
+                        ['value' => 'admin', 'label' => 'Admin'],
+                    ])
+                    ->value($role)
+                    ->required(true)
+            );
+
+            // Checkbox for sending verification email
+            $registerContainer->add(
+                UIBuilder::checkbox('send_verification_email')
+                    ->label('Send verification email')
+                    ->checked(true)
+            );
+        }
 
         // Buttons container
         $buttonsContainer = UIBuilder::container('register_buttons')
@@ -72,7 +128,7 @@ class RegisterDialogService
             ->justifyContent(JustifyContent::SPACE_BETWEEN)
             ->shadow(false)
             ->gap('10px')
-            ->padding('20px 0 0 0');
+            ->padding('10px 0 0 0');
 
         // Cancel button
         if ($cancelAction) {
@@ -98,6 +154,6 @@ class RegisterDialogService
 
         $registerContainer->add($buttonsContainer);
 
-        return $registerContainer->build();
+        return $registerContainer->toJson();
     }
 }

@@ -4,7 +4,8 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Role;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\PermissionRegistrar;
 
 class RoleSeeder extends Seeder
 {
@@ -17,9 +18,29 @@ class RoleSeeder extends Seeder
             return;
         }
 
-        Role::firstOrCreate(['name' => 'admin']);
-        Role::firstOrCreate(['name' => 'user']);
+        // Resetear caché de roles y permisos
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
-        $this->command->info('Roles sembrados correctamente.');
+        $permissions = [
+            'access-admin-panel',
+            'manage-users',
+            'edit-content',
+            'remove-content',
+            'view-reports',
+            'view-logs'
+        ];
+
+        foreach ($permissions as $permission) {
+            Permission::create(['name' => $permission]);
+        }
+
+        $roleUser = Role::create(['name' => 'user']);
+        $roleUser->givePermissionTo(['edit-content']);
+
+        $roleVerified = Role::create(['name' => 'verified']);
+        $roleVerified->givePermissionTo(['access-admin-panel']);
+
+        $roleAdmin = Role::create(['name' => 'admin']);
+        $roleAdmin->givePermissionTo(Permission::all());
     }
 }

@@ -58,7 +58,7 @@ class CustomVerifyEmailNotification extends Notification
 
         // Crea la URL temporal firmada para la verificación
         $temporaryUrl = URL::temporarySignedRoute(
-            'verification.verify',
+            'verification.notice',
             Carbon::now()->addMinutes($expireMinutes),
             [
                 'id' => $notifiable->getKey(),
@@ -66,7 +66,8 @@ class CustomVerifyEmailNotification extends Notification
             ]
         );
         // Reemplaza la base de la URL por APP_URL
-        return preg_replace('/^https?:\/\/[^\/]+/', $appUrl, $temporaryUrl);
+        // return preg_replace('/^https?:\/\/[^\/]+/', $appUrl, $temporaryUrl);
+        return $temporaryUrl;
     }
 
     /**

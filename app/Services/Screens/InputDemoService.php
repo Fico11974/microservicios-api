@@ -1,52 +1,60 @@
 <?php
-
 namespace App\Services\Screens;
 
-use App\Services\UI\UIBuilder;
-use App\Services\UI\Enums\LayoutType;
 use App\Services\UI\AbstractUIService;
-use App\Services\UI\Components\UIContainer;
+use App\Services\UI\Components\InputBuilder;
 use App\Services\UI\Components\LabelBuilder;
+use App\Services\UI\Components\UIContainer;
+use App\Services\UI\Support\UIDebug;
+use App\Services\UI\UIBuilder;
 
 /**
  * Input Demo Service
- * 
+ *
  * Demonstrates input component functionality:
  * - Text input with placeholder
  * - Reading input value from frontend
  * - Updating input value from backend
  * - Label updates based on input
- * 
+ * - Error state with tooltip
+ *
  * Uses AbstractUIService for automatic event lifecycle management.
  * Event handlers only need to modify components, no return needed.
  */
 class InputDemoService extends AbstractUIService
 {
+    protected InputBuilder $input_text;
     protected LabelBuilder $lbl_result;
 
-    protected function buildBaseUI(...$params): UIContainer
+    protected function buildBaseUI(UIContainer $container, ...$params): void
     {
-        $container = UIBuilder::container('main')
-            ->parent('main')
-            ->layout(LayoutType::VERTICAL)
-            ->title('Input Component Demo');
+        $container
+            ->title('Input Component Demo')
+            ->maxWidth('500px')
+            ->centerHorizontal()
+            ->shadow(2)
+            ->padding('30px');
 
         $container->add(
             UIBuilder::label('lbl_instruction')
-                ->text('📝 Type something in the input below and click "Get Value"')
+                ->text('📝 Enter a name with at least 3 characters and click "Validate"')
                 ->style('info')
+                ->width('100%')
         );
 
         $container->add(
             UIBuilder::input('input_text')
-                ->placeholder('Enter your text here...')
+                ->label('Your Name')
+                ->placeholder('Enter your name here...')
                 ->value('')
-                ->required(false)
+                ->required(true)
+                ->type('text')
+                ->width('100%')
         );
 
         $container->add(
             UIBuilder::button('btn_get_value')
-                ->label('Get Value')
+                ->label('Validate')
                 ->action('get_value')
                 ->style('primary')
         );
@@ -55,28 +63,48 @@ class InputDemoService extends AbstractUIService
             UIBuilder::label('lbl_result')
                 ->text('Result will appear here')
                 ->style('default')
+                ->width('100%')
         );
+    }
 
-        return $container;
+    protected function postLoadUI(): void
+    {
+        $this->input_text->value('')->error(null);
+        $this->lbl_result
+            ->text('Result will appear here')
+            ->style('default');
     }
 
     /**
-     * Handle "Get Value" button click
-     * 
-     * Reads the input value sent from frontend and displays it in the result label.
+     * Handle "Validate" button click
+     *
+     * Validates the input and shows errors using the error() method with tooltip.
      * No return needed - AbstractUIService handles diff calculation and response.
-     * 
+     *
      * @param array $params Event parameters (should include 'input_text' from input)
      * @return void
      */
     public function onGetValue(array $params): void
     {
-        $inputValue = $params['input_text'] ?? '';
-        
+        UIDebug::info('Validate button clicked', $params);
+        $inputValue = trim($params['input_text'] ?? '');
+
+        // Clear previous error
+        $this->input_text->error(null);
+
         if (empty($inputValue)) {
-            $this->lbl_result->text('⚠️ Input is empty!')->style('warning');
+            $this->displayError('Name is required');
+        } elseif (\strlen($inputValue) < 3) {
+            $this->displayError('Name must be at least 3 characters');
         } else {
-            $this->lbl_result->text("✅ You typed: \"$inputValue\"")->style('success');
+            $this->lbl_result->text("✅ Valid name: \"{$inputValue}\"")->style('success');
         }
+    }
+
+    private function displayError(string $message): void
+    {
+        $this->input_text->error($message);
+        $this->toast($message, 'error');
+        $this->lbl_result->text('❌ Please fix the error above')->style('danger');
     }
 }
