@@ -14,6 +14,8 @@ class DatabaseSeeder extends Seeder
             ChannelSeeder::class,
             MediaSeeder::class,
             PostSeeder::class,
+            CustomerSeeder::class,
+            ProductSeeder::class,
         ]);
     }
 }
